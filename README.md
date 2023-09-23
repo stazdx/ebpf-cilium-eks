@@ -72,12 +72,13 @@ $ multipass purge
 ```
 # Creamos un cluster de EKS con eksctl sin nodegroup asociado
 $ brew install weaveworks/tap/eksctl
-$ eksctl create cluster --name test-cluster --without-nodegroup
+$ eksctl create cluster --name ciliumdemo --without-nodegroup
 
 # Eliminamos aws-node para instalar Cilium 
 $ kubectl -n kube-system delete daemonset aws-node
 
 # Instalamos Cilium con helm
+$ brew install helm@3
 $ helm repo add cilium https://helm.cilium.io/
 $ helm install cilium cilium/cilium --version 1.9.18 \
   --namespace kube-system \
@@ -88,10 +89,10 @@ $ helm install cilium cilium/cilium --version 1.9.18 \
   --set nodeinit.enabled=true
 
 # Ahora si, creamos el nodegroup con 2 nodos
-$ eksctl create nodegroup --cluster test-cluster --nodes 2
+$ eksctl create nodegroup --cluster ciliumdemo --nodes 2
 $ kubectl -n kube-system get pods --watch
 
-# Cuando los pods esten en Ready, creamos namespace para nuestro ejemplo
+# Cuando los pods esten en Ready, creamos un namespace para nuestro ejemplo
 $ kubectl create ns cilium-test
 
 # Instalamos ejemplos de Cilium
@@ -109,11 +110,19 @@ $ helm upgrade cilium cilium/cilium --version 1.9.18 \
    --set hubble.ui.enabled=true
 
 # Realizamos un port-forward para poder acceder a la interfaz localmente
-$ kubectl port-forward -n $CILIUM_NAMESPACE svc/hubble-ui --address 0.0.0.0 --address :: 12000:80
+$ kubectl port-forward -n kube-system svc/hubble-ui --address 0.0.0.0 --address :: 12000:80
 ```
 
 Finalmente ingresamos a http://localhost:12000 en nuestro navegador para ver la UI.
 
+# Para borrar el cluster EKS ejecutamos
+
+```
+$ eksctl delete cluster --name ciliumdemo
+```
+
 Referencia: https://docs.cilium.io/en/v1.9/gettingstarted/k8s-install-eks/
+
+
 
 Happy coding! 
